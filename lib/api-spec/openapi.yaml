@@ -2,21 +2,38 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: API specification
+  version: 1.0.0
+  description: STACK Service Desk AI Solution API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: tickets
+    description: Ticket management
+  - name: dashboard
+    description: Dashboard data
+  - name: reports
+    description: Analytics and reports
+  - name: roi
+    description: ROI metrics
+  - name: logs
+    description: Audit and system logs
+  - name: admin
+    description: Administration
+  - name: sops
+    description: SOP management
+  - name: chat
+    description: Chat interface
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +41,922 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /v1/auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Agent"
+
+  /v1/auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with credentials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthToken"
+
+  /v1/tickets:
+    get:
+      operationId: listTickets
+      tags: [tickets]
+      summary: List tickets with filters
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: use_case
+          in: query
+          schema:
+            type: string
+        - name: priority
+          in: query
+          schema:
+            type: string
+        - name: sla_status
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: date_from
+          in: query
+          schema:
+            type: string
+        - name: date_to
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: List of tickets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketListResponse"
+    post:
+      operationId: createTicket
+      tags: [tickets]
+      summary: Create a new ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TicketInput"
+      responses:
+        "201":
+          description: Ticket created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+
+  /v1/tickets/{id}:
+    get:
+      operationId: getTicket
+      tags: [tickets]
+      summary: Get ticket detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ticket detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketDetail"
+    patch:
+      operationId: updateTicket
+      tags: [tickets]
+      summary: Update ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TicketUpdate"
+      responses:
+        "200":
+          description: Ticket updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+    delete:
+      operationId: deleteTicket
+      tags: [tickets]
+      summary: Delete ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ticket deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /v1/tickets/{id}/resolve:
+    post:
+      operationId: resolveTicket
+      tags: [tickets]
+      summary: Trigger AI resolution
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resolution result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiResolution"
+
+  /v1/tickets/{id}/escalate:
+    post:
+      operationId: escalateTicket
+      tags: [tickets]
+      summary: Manual escalation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EscalateInput"
+      responses:
+        "200":
+          description: Escalation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /v1/tickets/{id}/notes:
+    get:
+      operationId: getTicketNotes
+      tags: [tickets]
+      summary: Get ticket notes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ticket notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TicketNote"
+    post:
+      operationId: addTicketNote
+      tags: [tickets]
+      summary: Add note to ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoteInput"
+      responses:
+        "201":
+          description: Note added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketNote"
+
+  /v1/tickets/{id}/timeline:
+    get:
+      operationId: getTicketTimeline
+      tags: [tickets]
+      summary: Full ticket audit timeline
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Timeline events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditLog"
+
+  /v1/dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Dashboard summary KPIs
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /v1/dashboard/live-queue:
+    get:
+      operationId: getLiveQueue
+      tags: [dashboard]
+      summary: Live open ticket queue
+      responses:
+        "200":
+          description: Live queue tickets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ticket"
+
+  /v1/dashboard/sla-at-risk:
+    get:
+      operationId: getSlaAtRisk
+      tags: [dashboard]
+      summary: SLA at risk tickets
+      responses:
+        "200":
+          description: At-risk tickets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ticket"
+
+  /v1/dashboard/activity:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      summary: Recent audit activity feed
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditLog"
+
+  /v1/reports/resolution-rate:
+    get:
+      operationId: getResolutionRate
+      tags: [reports]
+      summary: Resolution rate by use case
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+        - name: date_to
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resolution rate data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResolutionRateReport"
+
+  /v1/reports/sla-compliance:
+    get:
+      operationId: getSlaCompliance
+      tags: [reports]
+      summary: SLA compliance report
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+        - name: date_to
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: SLA compliance data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SlaComplianceReport"
+
+  /v1/reports/ticket-trends:
+    get:
+      operationId: getTicketTrends
+      tags: [reports]
+      summary: Ticket volume trends
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+        - name: date_to
+          in: query
+          schema:
+            type: string
+        - name: granularity
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+      responses:
+        "200":
+          description: Ticket trends data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TicketTrendsReport"
+
+  /v1/reports/ai-accuracy:
+    get:
+      operationId: getAiAccuracy
+      tags: [reports]
+      summary: AI confidence and accuracy analytics
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+        - name: date_to
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: AI accuracy data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiAccuracyReport"
+
+  /v1/reports/agent-performance:
+    get:
+      operationId: getAgentPerformance
+      tags: [reports]
+      summary: Agent performance metrics
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+        - name: date_to
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Agent performance data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AgentPerformance"
+
+  /v1/roi/current:
+    get:
+      operationId: getCurrentRoi
+      tags: [roi]
+      summary: Current period ROI metrics
+      responses:
+        "200":
+          description: Current ROI
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoiMetric"
+
+  /v1/roi/history:
+    get:
+      operationId: getRoiHistory
+      tags: [roi]
+      summary: Historical ROI by period
+      responses:
+        "200":
+          description: ROI history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RoiMetric"
+
+  /v1/roi/settings:
+    patch:
+      operationId: updateRoiSettings
+      tags: [roi]
+      summary: Update ROI cost settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoiSettingsUpdate"
+      responses:
+        "200":
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /v1/logs/audit:
+    get:
+      operationId: getAuditLogs
+      tags: [logs]
+      summary: Paginated audit logs
+      parameters:
+        - name: event_type
+          in: query
+          schema:
+            type: string
+        - name: actor_type
+          in: query
+          schema:
+            type: string
+        - name: use_case
+          in: query
+          schema:
+            type: string
+        - name: date_from
+          in: query
+          schema:
+            type: string
+        - name: date_to
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogListResponse"
+
+  /v1/logs/api-calls:
+    get:
+      operationId: getApiCallLogs
+      tags: [logs]
+      summary: API call logs
+      parameters:
+        - name: api_name
+          in: query
+          schema:
+            type: string
+        - name: date_from
+          in: query
+          schema:
+            type: string
+        - name: date_to
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: API call logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiCallLogListResponse"
+
+  /v1/logs/powershell:
+    get:
+      operationId: getPowershellLogs
+      tags: [logs]
+      summary: PowerShell execution logs
+      parameters:
+        - name: date_from
+          in: query
+          schema:
+            type: string
+        - name: date_to
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: PowerShell logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PsLogListResponse"
+
+  /v1/admin/thresholds:
+    get:
+      operationId: getThresholds
+      tags: [admin]
+      summary: Get confidence thresholds
+      responses:
+        "200":
+          description: Confidence thresholds
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConfidenceThreshold"
+
+  /v1/admin/thresholds/{id}:
+    patch:
+      operationId: updateThreshold
+      tags: [admin]
+      summary: Update confidence threshold
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ThresholdUpdate"
+      responses:
+        "200":
+          description: Threshold updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfidenceThreshold"
+
+  /v1/admin/sla-configs:
+    get:
+      operationId: getSlaConfigs
+      tags: [admin]
+      summary: Get SLA configurations
+      responses:
+        "200":
+          description: SLA configs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SlaConfig"
+
+  /v1/admin/sla-configs/{id}:
+    patch:
+      operationId: updateSlaConfig
+      tags: [admin]
+      summary: Update SLA config
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SlaConfigUpdate"
+      responses:
+        "200":
+          description: SLA config updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SlaConfig"
+
+  /v1/admin/groups:
+    get:
+      operationId: getAgentGroups
+      tags: [admin]
+      summary: Get agent groups
+      responses:
+        "200":
+          description: Agent groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AgentGroup"
+
+  /v1/admin/groups/{id}:
+    patch:
+      operationId: updateAgentGroup
+      tags: [admin]
+      summary: Update agent group
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentGroupUpdate"
+      responses:
+        "200":
+          description: Group updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentGroup"
+
+  /v1/admin/agents:
+    get:
+      operationId: listAgents
+      tags: [admin]
+      summary: List agents
+      responses:
+        "200":
+          description: Agents list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Agent"
+    post:
+      operationId: createAgent
+      tags: [admin]
+      summary: Add agent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentInput"
+      responses:
+        "201":
+          description: Agent created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Agent"
+
+  /v1/admin/agents/{id}:
+    patch:
+      operationId: updateAgent
+      tags: [admin]
+      summary: Update agent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AgentUpdate"
+      responses:
+        "200":
+          description: Agent updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Agent"
+
+  /v1/sops:
+    get:
+      operationId: listSops
+      tags: [sops]
+      summary: List all SOPs
+      responses:
+        "200":
+          description: SOPs list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sop"
+    post:
+      operationId: createSop
+      tags: [sops]
+      summary: Upload new SOP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SopInput"
+      responses:
+        "201":
+          description: SOP created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sop"
+
+  /v1/sops/{id}:
+    get:
+      operationId: getSop
+      tags: [sops]
+      summary: Get SOP detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: SOP detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sop"
+    patch:
+      operationId: updateSop
+      tags: [sops]
+      summary: Update SOP
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SopUpdate"
+      responses:
+        "200":
+          description: SOP updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sop"
+    delete:
+      operationId: deleteSop
+      tags: [sops]
+      summary: Deactivate SOP
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: SOP deactivated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /v1/sops/search:
+    post:
+      operationId: searchSops
+      tags: [sops]
+      summary: Semantic search SOPs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SopSearchInput"
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sop"
+
+  /v1/chat/message:
+    post:
+      operationId: sendChatMessage
+      tags: [chat]
+      summary: Send chat message (Google Chat Bot integration point)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMessageInput"
+      responses:
+        "200":
+          description: Chat response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +967,736 @@ components:
       required:
         - status
 
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+        - message
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    AuthToken:
+      type: object
+      required: [token, agent]
+      properties:
+        token:
+          type: string
+        agent:
+          $ref: "#/components/schemas/Agent"
+
+    Agent:
+      type: object
+      required: [agent_id, email, full_name, role, is_active]
+      properties:
+        agent_id:
+          type: string
+        email:
+          type: string
+        full_name:
+          type: string
+        role:
+          type: string
+          enum: [admin, agent, readonly]
+        freshservice_agent_id:
+          type: ["string", "null"]
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+
+    AgentInput:
+      type: object
+      required: [email, full_name, role]
+      properties:
+        email:
+          type: string
+        full_name:
+          type: string
+        role:
+          type: string
+          enum: [admin, agent, readonly]
+        freshservice_agent_id:
+          type: string
+
+    AgentUpdate:
+      type: object
+      properties:
+        full_name:
+          type: string
+        role:
+          type: string
+          enum: [admin, agent, readonly]
+        is_active:
+          type: boolean
+
+    Ticket:
+      type: object
+      required: [ticket_id, title, use_case, status, priority, sla_status, source, created_at]
+      properties:
+        ticket_id:
+          type: string
+        freshservice_ticket_id:
+          type: ["string", "null"]
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        use_case:
+          type: string
+          enum: [sharepoint_access, sharepoint_admin, license_bluebeam, license_adobe, license_o365, dl_update, windows_troubleshooting]
+        status:
+          type: string
+          enum: [open, in_progress, auto_resolved, escalated, closed]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        sla_deadline:
+          type: ["string", "null"]
+        sla_status:
+          type: string
+          enum: [safe, at_risk, breached]
+        sla_breach_predicted:
+          type: boolean
+        source:
+          type: string
+          enum: [freshservice, web_dashboard, google_chat]
+        assigned_agent_id:
+          type: ["string", "null"]
+        assigned_agent_name:
+          type: ["string", "null"]
+        resolution_type:
+          type: ["string", "null"]
+        confidence_score:
+          type: ["number", "null"]
+        created_at:
+          type: string
+        updated_at:
+          type: ["string", "null"]
+        closed_at:
+          type: ["string", "null"]
+
+    TicketDetail:
+      type: object
+      required: [ticket_id, title, use_case, status, priority, sla_status, source, created_at]
+      properties:
+        ticket_id:
+          type: string
+        freshservice_ticket_id:
+          type: ["string", "null"]
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        use_case:
+          type: string
+          enum: [sharepoint_access, sharepoint_admin, license_bluebeam, license_adobe, license_o365, dl_update, windows_troubleshooting]
+        status:
+          type: string
+          enum: [open, in_progress, auto_resolved, escalated, closed]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        sla_deadline:
+          type: ["string", "null"]
+        sla_status:
+          type: string
+          enum: [safe, at_risk, breached]
+        sla_breach_predicted:
+          type: boolean
+        source:
+          type: string
+          enum: [freshservice, web_dashboard, google_chat]
+        assigned_agent_id:
+          type: ["string", "null"]
+        assigned_agent_name:
+          type: ["string", "null"]
+        resolution_type:
+          type: ["string", "null"]
+        confidence_score:
+          type: ["number", "null"]
+        created_at:
+          type: string
+        updated_at:
+          type: ["string", "null"]
+        closed_at:
+          type: ["string", "null"]
+        ai_resolution:
+          $ref: "#/components/schemas/AiResolution"
+        notes:
+          type: array
+          items:
+            $ref: "#/components/schemas/TicketNote"
+
+    TicketListResponse:
+      type: object
+      required: [tickets, total, page, limit]
+      properties:
+        tickets:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ticket"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    TicketInput:
+      type: object
+      required: [title, use_case, source]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        use_case:
+          type: string
+          enum: [sharepoint_access, sharepoint_admin, license_bluebeam, license_adobe, license_o365, dl_update, windows_troubleshooting]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        source:
+          type: string
+          enum: [freshservice, web_dashboard, google_chat]
+
+    TicketUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [open, in_progress, auto_resolved, escalated, closed]
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+        assigned_agent_id:
+          type: string
+
+    AiResolution:
+      type: object
+      required: [resolution_id, ticket_id, confidence_score, decision, created_at]
+      properties:
+        resolution_id:
+          type: string
+        ticket_id:
+          type: string
+        intent_detected:
+          type: ["string", "null"]
+        root_cause:
+          type: ["string", "null"]
+        confidence_score:
+          type: number
+        intent_clarity_score:
+          type: ["number", "null"]
+        sop_match_score:
+          type: ["number", "null"]
+        historical_success_score:
+          type: ["number", "null"]
+        input_completeness_score:
+          type: ["number", "null"]
+        decision:
+          type: string
+          enum: [auto_resolve, review_after, escalate]
+        resolution_steps:
+          type: ["array", "null"]
+          items:
+            type: string
+        execution_status:
+          type: ["string", "null"]
+        execution_output:
+          type: ["string", "null"]
+        time_taken_seconds:
+          type: ["integer", "null"]
+        created_at:
+          type: string
+
+    EscalateInput:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+
+    TicketNote:
+      type: object
+      required: [note_id, ticket_id, note_type, content, created_at]
+      properties:
+        note_id:
+          type: string
+        ticket_id:
+          type: string
+        note_type:
+          type: string
+          enum: [ai_context, resolution_summary, human_note, system_note]
+        content:
+          type: string
+        created_by:
+          type: ["string", "null"]
+        created_at:
+          type: string
+
+    NoteInput:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+        note_type:
+          type: string
+          enum: [ai_context, resolution_summary, human_note, system_note]
+
+    AuditLog:
+      type: object
+      required: [log_id, event_type, actor, actor_type, created_at]
+      properties:
+        log_id:
+          type: string
+        ticket_id:
+          type: ["string", "null"]
+        event_type:
+          type: string
+        actor:
+          type: string
+        actor_type:
+          type: string
+          enum: [user, ai, agent, system]
+        details:
+          type: object
+        ip_address:
+          type: ["string", "null"]
+        created_at:
+          type: string
+
+    AuditLogListResponse:
+      type: object
+      required: [logs, total, page, limit]
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    ApiCallLog:
+      type: object
+      required: [api_log_id, api_name, endpoint, method, response_status, called_at]
+      properties:
+        api_log_id:
+          type: string
+        ticket_id:
+          type: ["string", "null"]
+        api_name:
+          type: string
+        endpoint:
+          type: string
+        method:
+          type: string
+        request_payload:
+          type: ["object", "null"]
+        response_status:
+          type: integer
+        response_payload:
+          type: ["object", "null"]
+        duration_ms:
+          type: ["integer", "null"]
+        called_at:
+          type: string
+
+    ApiCallLogListResponse:
+      type: object
+      required: [logs, total, page, limit]
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApiCallLog"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    PsLog:
+      type: object
+      required: [execution_id, ticket_id, script_name, execution_status, executed_at]
+      properties:
+        execution_id:
+          type: string
+        ticket_id:
+          type: string
+        resolution_id:
+          type: ["string", "null"]
+        device_name:
+          type: ["string", "null"]
+        device_ip:
+          type: ["string", "null"]
+        script_name:
+          type: string
+        script_content:
+          type: ["string", "null"]
+        execution_status:
+          type: string
+          enum: [success, failed, timeout, partial]
+        output_log:
+          type: ["string", "null"]
+        executed_at:
+          type: string
+        duration_seconds:
+          type: ["integer", "null"]
+
+    PsLogListResponse:
+      type: object
+      required: [logs, total, page, limit]
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/PsLog"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    DashboardSummary:
+      type: object
+      required: [total_open, resolved_today, sla_met_percent, auto_resolution_rate, sla_at_risk_count, avg_resolution_time_mins]
+      properties:
+        total_open:
+          type: integer
+        resolved_today:
+          type: integer
+        sla_met_percent:
+          type: number
+        auto_resolution_rate:
+          type: number
+        tickets_by_use_case:
+          type: object
+        tickets_by_status:
+          type: object
+        sla_at_risk_count:
+          type: integer
+        avg_resolution_time_mins:
+          type: number
+
+    ResolutionRateItem:
+      type: object
+      required: [use_case, auto_count, manual_count, total, auto_rate]
+      properties:
+        use_case:
+          type: string
+        auto_count:
+          type: integer
+        manual_count:
+          type: integer
+        total:
+          type: integer
+        auto_rate:
+          type: number
+
+    ResolutionRateReport:
+      type: object
+      required: [items, date_from, date_to]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResolutionRateItem"
+        date_from:
+          type: string
+        date_to:
+          type: string
+
+    SlaComplianceReport:
+      type: object
+      required: [met_count, breached_count, at_risk_count, compliance_percent, trend]
+      properties:
+        met_count:
+          type: integer
+        breached_count:
+          type: integer
+        at_risk_count:
+          type: integer
+        compliance_percent:
+          type: number
+        trend:
+          type: array
+          items:
+            type: object
+
+    TicketTrendsReport:
+      type: object
+      required: [trend]
+      properties:
+        trend:
+          type: array
+          items:
+            type: object
+
+    AiAccuracyReport:
+      type: object
+      required: [avg_confidence, distribution, by_use_case]
+      properties:
+        avg_confidence:
+          type: number
+        distribution:
+          type: array
+          items:
+            type: object
+        by_use_case:
+          type: array
+          items:
+            type: object
+        trend:
+          type: array
+          items:
+            type: object
+
+    AgentPerformance:
+      type: object
+      required: [agent_id, full_name, tickets_handled, avg_resolution_mins]
+      properties:
+        agent_id:
+          type: string
+        full_name:
+          type: string
+        tickets_handled:
+          type: integer
+        avg_resolution_mins:
+          type: number
+
+    RoiMetric:
+      type: object
+      required: [metric_id, period_start, period_end, total_tickets, auto_resolved_count, manual_resolved_count, hours_saved, cost_saved, calculated_at]
+      properties:
+        metric_id:
+          type: string
+        period_start:
+          type: string
+        period_end:
+          type: string
+        total_tickets:
+          type: integer
+        auto_resolved_count:
+          type: integer
+        manual_resolved_count:
+          type: integer
+        avg_auto_resolution_mins:
+          type: ["number", "null"]
+        avg_manual_resolution_mins:
+          type: ["number", "null"]
+        hours_saved:
+          type: number
+        cost_saved:
+          type: number
+        agent_hourly_cost:
+          type: number
+        calculated_at:
+          type: string
+
+    RoiSettingsUpdate:
+      type: object
+      properties:
+        agent_hourly_cost:
+          type: number
+        avg_manual_resolution_mins:
+          type: number
+
+    ConfidenceThreshold:
+      type: object
+      required: [threshold_id, use_case, auto_resolve_min, review_after_min]
+      properties:
+        threshold_id:
+          type: string
+        use_case:
+          type: string
+        auto_resolve_min:
+          type: number
+        review_after_min:
+          type: number
+        updated_at:
+          type: ["string", "null"]
+
+    ThresholdUpdate:
+      type: object
+      properties:
+        auto_resolve_min:
+          type: number
+        review_after_min:
+          type: number
+
+    SlaConfig:
+      type: object
+      required: [sla_id, use_case, priority, resolution_hours, warning_threshold_percent]
+      properties:
+        sla_id:
+          type: string
+        use_case:
+          type: string
+        priority:
+          type: string
+        resolution_hours:
+          type: integer
+        warning_threshold_percent:
+          type: number
+        updated_at:
+          type: ["string", "null"]
+
+    SlaConfigUpdate:
+      type: object
+      properties:
+        resolution_hours:
+          type: integer
+        warning_threshold_percent:
+          type: number
+
+    AgentGroupMember:
+      type: object
+      required: [member_id, agent_id, full_name, email, priority_order]
+      properties:
+        member_id:
+          type: string
+        agent_id:
+          type: string
+        full_name:
+          type: string
+        email:
+          type: string
+        priority_order:
+          type: integer
+
+    AgentGroup:
+      type: object
+      required: [group_id, group_name, use_case, assignment_mode]
+      properties:
+        group_id:
+          type: string
+        group_name:
+          type: string
+        use_case:
+          type: string
+        assignment_mode:
+          type: string
+          enum: [round_robin, first_available, priority]
+        freshservice_group_id:
+          type: ["string", "null"]
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/AgentGroupMember"
+
+    AgentGroupUpdate:
+      type: object
+      properties:
+        assignment_mode:
+          type: string
+          enum: [round_robin, first_available, priority]
+
+    Sop:
+      type: object
+      required: [sop_id, title, use_case, content, version, is_active, created_at]
+      properties:
+        sop_id:
+          type: string
+        title:
+          type: string
+        use_case:
+          type: string
+          enum: [sharepoint_access, sharepoint_admin, license_bluebeam, license_adobe, license_o365, dl_update, windows_troubleshooting]
+        content:
+          type: string
+        version:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+        updated_at:
+          type: ["string", "null"]
+
+    SopInput:
+      type: object
+      required: [title, use_case, content]
+      properties:
+        title:
+          type: string
+        use_case:
+          type: string
+          enum: [sharepoint_access, sharepoint_admin, license_bluebeam, license_adobe, license_o365, dl_update, windows_troubleshooting]
+        content:
+          type: string
+        version:
+          type: string
+
+    SopUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        version:
+          type: string
+        is_active:
+          type: boolean
+
+    SopSearchInput:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+        use_case:
+          type: string
+
+    ChatMessageInput:
+      type: object
+      required: [user_id, session_id, message, platform]
+      properties:
+        user_id:
+          type: string
+        session_id:
+          type: string
+        message:
+          type: string
+        platform:
+          type: string
+          enum: [google_chat, web_dashboard]
+        context:
+          type: object
+
+    ChatResponse:
+      type: object
+      required: [reply, requires_input, session_id]
+      properties:
+        reply:
+          type: string
+        ticket_id:
+          type: ["string", "null"]
+        action_taken:
+          type: ["string", "null"]
+        requires_input:
+          type: boolean
+        input_prompt:
+          type: ["string", "null"]
+        session_id:
+          type: string

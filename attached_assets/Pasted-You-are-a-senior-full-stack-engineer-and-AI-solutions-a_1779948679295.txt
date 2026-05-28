@@ -1,0 +1,1517 @@
+You are a senior full-stack engineer and AI solutions architect. Your task is to 
+build the complete "STACK Service Desk AI Solution" — an enterprise-grade, 
+AI-powered IT service desk automation platform developed by Jade Global Software 
+Pvt Ltd. This is an on-premise deployable system with a React web dashboard and 
+Google Chat Bot, powered by Azure OpenAI GPT-4o and LangChain.
+
+Read every word of this prompt before writing a single line of code. This is a 
+complete system specification. Build everything described.
+
+════════════════════════════════════════════════════════════
+SECTION 1 — PROJECT IDENTITY
+════════════════════════════════════════════════════════════
+
+Project Name: STACK Service Desk AI Solution
+Organization: Jade Global Software Pvt Ltd
+Version: 1.0
+Lead Developer: Nikhil Rokade (backend, AI, dashboard, automation)
+Chatbot Developer: Priyanka Chougule (Google Chat Bot)
+Project Lead: Sanjay Deshpande
+Project Guide: Dattatraya Girawale
+
+Brand Colors:
+  Primary Navy: #1B3A6B
+  Accent Orange: #F47920
+  Cyan Accent: #0097A7
+  White: #FFFFFF
+
+════════════════════════════════════════════════════════════
+SECTION 2 — SYSTEM OVERVIEW
+════════════════════════════════════════════════════════════
+
+STACK is an intelligent, end-to-end IT service desk automation platform that:
+- Integrates with Freshservice (ITSM) via REST API v2
+- Integrates with Microsoft ecosystem (SharePoint, O365, Graph API)
+- Integrates with Google Workspace (Google Chat Bot)
+- Auto-resolves tickets using AI + SOP-grounded decisions
+- Escalates to human agents when AI confidence is low
+- Logs everything to Elasticsearch
+- Displays real-time dashboards and ROI metrics
+
+Two delivery channels:
+1. React.js Web Dashboard — for IT admins and managers
+2. Google Chat Bot — for end users (Google Workspace)
+
+════════════════════════════════════════════════════════════
+SECTION 3 — COMPLETE PROJECT STRUCTURE
+════════════════════════════════════════════════════════════
+
+Build the following folder structure exactly:
+
+stack-service-desk/
+├── backend/                          # FastAPI Python backend
+│   ├── main.py                       # FastAPI app entry point
+│   ├── requirements.txt
+│   ├── .env.example
+│   ├── alembic/                      # DB migrations
+│   │   └── versions/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── v1/
+│   │   │   │   ├── routes/
+│   │   │   │   │   ├── tickets.py
+│   │   │   │   │   ├── ai_resolution.py
+│   │   │   │   │   ├── chat.py          # /api/v1/chat/message
+│   │   │   │   │   ├── dashboard.py
+│   │   │   │   │   ├── reports.py
+│   │   │   │   │   ├── roi.py
+│   │   │   │   │   ├── logs.py
+│   │   │   │   │   ├── admin.py
+│   │   │   │   │   ├── sops.py
+│   │   │   │   │   ├── agents.py
+│   │   │   │   │   └── auth.py
+│   │   ├── core/
+│   │   │   ├── config.py             # All env config (pydantic settings)
+│   │   │   ├── security.py           # OAuth2, JWT
+│   │   │   ├── database.py           # PostgreSQL + pgvector setup
+│   │   │   ├── redis_client.py
+│   │   │   ├── elasticsearch_client.py
+│   │   │   └── celery_app.py
+│   │   ├── models/                   # SQLAlchemy ORM models
+│   │   │   ├── ticket.py
+│   │   │   ├── ticket_note.py
+│   │   │   ├── ticket_attachment.py
+│   │   │   ├── ai_resolution.py
+│   │   │   ├── sop.py
+│   │   │   ├── powershell_execution.py
+│   │   │   ├── user.py
+│   │   │   ├── agent.py
+│   │   │   ├── agent_group.py
+│   │   │   ├── agent_group_member.py
+│   │   │   ├── audit_log.py
+│   │   │   ├── api_call_log.py
+│   │   │   ├── chat_session.py
+│   │   │   ├── confidence_threshold.py
+│   │   │   ├── sla_config.py
+│   │   │   └── roi_metric.py
+│   │   ├── schemas/                  # Pydantic schemas
+│   │   │   └── [mirror of models]
+│   │   ├── services/                 # Business logic
+│   │   │   ├── freshservice_service.py
+│   │   │   ├── graph_api_service.py
+│   │   │   ├── license_service.py
+│   │   │   ├── powershell_service.py
+│   │   │   ├── notification_service.py
+│   │   │   └── sla_service.py
+│   │   ├── ai/                       # All AI/LangChain logic
+│   │   │   ├── langchain_agent.py    # Main LangChain agent
+│   │   │   ├── rag_pipeline.py       # RAG + pgvector retrieval
+│   │   │   ├── confidence_scorer.py  # 4-factor confidence scoring
+│   │   │   ├── intent_detector.py    # Intent classification
+│   │   │   ├── sla_predictor.py      # SLA breach prediction
+│   │   │   ├── sop_embedder.py       # SOP ingestion + embedding
+│   │   │   └── use_cases/
+│   │   │       ├── sharepoint_agent.py
+│   │   │       ├── license_agent.py
+│   │   │       ├── dl_agent.py
+│   │   │       └── windows_agent.py
+│   │   ├── tasks/                    # Celery background tasks
+│   │   │   ├── sla_monitor.py
+│   │   │   ├── roi_calculator.py
+│   │   │   ├── log_shipper.py
+│   │   │   └── ticket_sync.py
+│   │   └── utils/
+│   │       ├── logger.py
+│   │       └── helpers.py
+│
+├── frontend/                         # React.js Web Dashboard
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── .env.example
+│   ├── public/
+│   │   └── stack-logo.png
+│   └── src/
+│       ├── main.jsx
+│       ├── App.jsx
+│       ├── index.css
+│       ├── assets/
+│       ├── components/
+│       │   ├── layout/
+│       │   │   ├── AppLayout.jsx     # Main layout with sidebar
+│       │   │   ├── Sidebar.jsx
+│       │   │   ├── TopBar.jsx
+│       │   │   └── Footer.jsx
+│       │   ├── common/
+│       │   │   ├── SLABadge.jsx      # Green/Yellow/Red SLA badge
+│       │   │   ├── ConfidenceBadge.jsx
+│       │   │   ├── StatusTag.jsx
+│       │   │   └── LoadingSpinner.jsx
+│       │   └── charts/
+│       │       ├── ResolutionRateChart.jsx
+│       │       ├── TicketTrendChart.jsx
+│       │       ├── SLAComplianceChart.jsx
+│       │       └── ROITrendChart.jsx
+│       ├── pages/
+│       │   ├── Dashboard.jsx         # Home/overview
+│       │   ├── Tickets.jsx           # Live ticket queue
+│       │   ├── TicketDetail.jsx      # Single ticket deep view
+│       │   ├── Logs.jsx              # Audit log viewer
+│       │   ├── Reports.jsx           # Analytics & reporting
+│       │   ├── ROIDashboard.jsx      # ROI metrics
+│       │   ├── Admin.jsx             # Admin configuration
+│       │   ├── SOPManager.jsx        # SOP upload & management
+│       │   └── Login.jsx
+│       ├── store/                    # Redux Toolkit
+│       │   ├── index.js
+│       │   ├── ticketSlice.js
+│       │   ├── authSlice.js
+│       │   └── dashboardSlice.js
+│       ├── api/                      # Axios API clients
+│       │   ├── axiosClient.js
+│       │   ├── ticketApi.js
+│       │   ├── dashboardApi.js
+│       │   ├── reportsApi.js
+│       │   └── adminApi.js
+│       └── hooks/
+│           ├── useTickets.js
+│           └── useDashboard.js
+│
+├── chatbot/                          # Priyanka's Google Chat Bot
+│   ├── main.py                       # Webhook entry point
+│   ├── requirements.txt
+│   ├── .env.example
+│   ├── app/
+│   │   ├── webhook_handler.py        # Google Chat event handler
+│   │   ├── conversation_manager.py   # Session + context manager
+│   │   ├── flows/
+│   │   │   ├── base_flow.py
+│   │   │   ├── sharepoint_flow.py
+│   │   │   ├── license_flow.py
+│   │   │   ├── dl_flow.py
+│   │   │   └── windows_flow.py
+│   │   ├── api_client.py             # Calls Nikhil's FastAPI
+│   │   └── auth.py                   # Google OAuth
+│
+├── scripts/                          # PowerShell scripts
+│   ├── windows/
+│   │   ├── password_reset.ps1
+│   │   ├── printer_fix.ps1
+│   │   ├── software_install.ps1
+│   │   ├── software_uninstall.ps1
+│   │   ├── disk_cleanup.ps1
+│   │   ├── performance_fix.ps1
+│   │   └── network_reset.ps1
+│   └── sop_ingest/
+│       └── ingest_sops.py
+│
+├── sops/                             # SOP documents (markdown)
+│   ├── sharepoint_access.md
+│   ├── sharepoint_admin.md
+│   ├── license_bluebeam.md
+│   ├── license_adobe.md
+│   ├── license_o365.md
+│   ├── dl_update.md
+│   └── windows_troubleshooting.md
+│
+├── docker/
+│   ├── docker-compose.yml
+│   ├── docker-compose.dev.yml
+│   ├── backend.Dockerfile
+│   ├── frontend.Dockerfile
+│   └── chatbot.Dockerfile
+│
+├── nginx/
+│   └── nginx.conf
+│
+└── .gitignore
+
+════════════════════════════════════════════════════════════
+SECTION 4 — DATABASE SCHEMA (PostgreSQL + pgvector)
+════════════════════════════════════════════════════════════
+
+Install pgvector extension. Create ALL tables below using 
+SQLAlchemy ORM with Alembic migrations.
+
+ENUMS (define as PostgreSQL native ENUMs):
+  use_case: sharepoint_access, sharepoint_admin, license_bluebeam,
+            license_adobe, license_o365, dl_update, 
+            windows_troubleshooting
+  status: open, in_progress, auto_resolved, escalated, closed
+  priority: low, medium, high, urgent
+  source: freshservice, web_dashboard, google_chat
+  sla_status: safe, at_risk, breached
+  resolution_type: auto, manual
+  assignment_mode: round_robin, first_available, priority
+  actor_type: user, ai, agent, system
+  note_type: ai_context, resolution_summary, human_note, system_note
+  execution_status: success, failed, timeout, partial
+  decision: auto_resolve, review_after, escalate
+
+TABLE: tickets
+  ticket_id UUID PK
+  freshservice_ticket_id VARCHAR UNIQUE
+  title VARCHAR NOT NULL
+  description TEXT
+  use_case use_case ENUM NOT NULL
+  status status ENUM DEFAULT 'open'
+  priority priority ENUM DEFAULT 'medium'
+  sla_deadline TIMESTAMP
+  sla_status sla_status ENUM DEFAULT 'safe'
+  sla_breach_predicted BOOLEAN DEFAULT FALSE
+  created_at TIMESTAMP DEFAULT NOW()
+  updated_at TIMESTAMP
+  closed_at TIMESTAMP NULLABLE
+  source source ENUM NOT NULL
+  user_id UUID FK → users.user_id
+  assigned_agent_id UUID FK → agents.agent_id NULLABLE
+  resolution_type resolution_type ENUM NULLABLE
+
+TABLE: ticket_notes
+  note_id UUID PK
+  ticket_id UUID FK → tickets.ticket_id CASCADE DELETE
+  note_type note_type ENUM
+  content TEXT NOT NULL
+  created_by VARCHAR
+  created_at TIMESTAMP DEFAULT NOW()
+
+TABLE: ticket_attachments
+  attachment_id UUID PK
+  ticket_id UUID FK → tickets.ticket_id CASCADE DELETE
+  file_name VARCHAR
+  file_path VARCHAR
+  uploaded_at TIMESTAMP DEFAULT NOW()
+
+TABLE: ai_resolutions
+  resolution_id UUID PK
+  ticket_id UUID FK → tickets.ticket_id
+  intent_detected VARCHAR
+  root_cause TEXT
+  sop_matched UUID FK → sops.sop_id NULLABLE
+  confidence_score FLOAT
+  intent_clarity_score FLOAT
+  sop_match_score FLOAT
+  historical_success_score FLOAT
+  input_completeness_score FLOAT
+  decision decision ENUM
+  resolution_steps JSONB
+  execution_status execution_status ENUM
+  execution_output TEXT
+  time_taken_seconds INTEGER
+  created_at TIMESTAMP DEFAULT NOW()
+
+TABLE: sops
+  sop_id UUID PK
+  title VARCHAR NOT NULL
+  use_case use_case ENUM NOT NULL
+  content TEXT NOT NULL
+  embedding_vector VECTOR(1536)    ← pgvector column
+  version VARCHAR DEFAULT '1.0'
+  is_active BOOLEAN DEFAULT TRUE
+  created_at TIMESTAMP DEFAULT NOW()
+  updated_at TIMESTAMP
+
+TABLE: powershell_executions
+  execution_id UUID PK
+  ticket_id UUID FK → tickets.ticket_id
+  resolution_id UUID FK → ai_resolutions.resolution_id
+  device_name VARCHAR
+  device_ip VARCHAR
+  script_name VARCHAR
+  script_content TEXT
+  execution_status execution_status ENUM
+  output_log TEXT
+  executed_at TIMESTAMP DEFAULT NOW()
+  duration_seconds INTEGER
+
+TABLE: users
+  user_id UUID PK
+  email VARCHAR UNIQUE NOT NULL
+  full_name VARCHAR
+  department VARCHAR
+  device_name VARCHAR
+  device_ip VARCHAR
+  google_workspace_id VARCHAR
+  freshservice_requester_id VARCHAR
+  created_at TIMESTAMP DEFAULT NOW()
+
+TABLE: agents
+  agent_id UUID PK
+  email VARCHAR UNIQUE NOT NULL
+  full_name VARCHAR NOT NULL
+  role ENUM('admin','agent','readonly') DEFAULT 'agent'
+  freshservice_agent_id VARCHAR
+  is_active BOOLEAN DEFAULT TRUE
+  created_at TIMESTAMP DEFAULT NOW()
+
+TABLE: agent_groups
+  group_id UUID PK
+  group_name VARCHAR NOT NULL
+  use_case use_case ENUM NOT NULL
+  assignment_mode assignment_mode ENUM DEFAULT 'round_robin'
+  freshservice_group_id VARCHAR
+  created_at TIMESTAMP DEFAULT NOW()
+
+TABLE: agent_group_members
+  member_id UUID PK
+  group_id UUID FK → agent_groups.group_id
+  agent_id UUID FK → agents.agent_id
+  priority_order INTEGER DEFAULT 1
+  joined_at TIMESTAMP DEFAULT NOW()
+
+TABLE: audit_logs
+  log_id UUID PK
+  ticket_id UUID FK → tickets.ticket_id NULLABLE
+  event_type ENUM('ticket_created','ai_triage','auto_resolved',
+    'escalated','human_resolved','sla_breached','sla_at_risk',
+    'powershell_executed','api_called','user_notified')
+  actor VARCHAR
+  actor_type actor_type ENUM
+  details JSONB
+  ip_address VARCHAR
+  created_at TIMESTAMP DEFAULT NOW()
+
+TABLE: api_call_logs
+  api_log_id UUID PK
+  ticket_id UUID FK → tickets.ticket_id NULLABLE
+  api_name ENUM('freshservice','graph_api','adobe_api',
+    'bluebeam_api','o365_api','azure_openai','powershell')
+  endpoint VARCHAR
+  method VARCHAR
+  request_payload JSONB
+  response_status INTEGER
+  response_payload JSONB
+  duration_ms INTEGER
+  called_at TIMESTAMP DEFAULT NOW()
+
+TABLE: chat_sessions
+  session_id UUID PK
+  user_id UUID FK → users.user_id
+  ticket_id UUID FK → tickets.ticket_id NULLABLE
+  platform ENUM('google_chat','web_dashboard')
+  messages JSONB
+  session_start TIMESTAMP DEFAULT NOW()
+  session_end TIMESTAMP NULLABLE
+
+TABLE: confidence_thresholds
+  threshold_id UUID PK
+  use_case use_case ENUM UNIQUE NOT NULL
+  auto_resolve_min FLOAT DEFAULT 85.0
+  review_after_min FLOAT DEFAULT 60.0
+  updated_by UUID FK → agents.agent_id
+  updated_at TIMESTAMP DEFAULT NOW()
+
+TABLE: sla_configs
+  sla_id UUID PK
+  use_case use_case ENUM NOT NULL
+  priority priority ENUM NOT NULL
+  resolution_hours INTEGER NOT NULL
+  warning_threshold_percent FLOAT DEFAULT 75.0
+  updated_at TIMESTAMP DEFAULT NOW()
+  UNIQUE(use_case, priority)
+
+TABLE: roi_metrics
+  metric_id UUID PK
+  period_start DATE NOT NULL
+  period_end DATE NOT NULL
+  total_tickets INTEGER DEFAULT 0
+  auto_resolved_count INTEGER DEFAULT 0
+  manual_resolved_count INTEGER DEFAULT 0
+  avg_auto_resolution_mins FLOAT
+  avg_manual_resolution_mins FLOAT
+  hours_saved FLOAT
+  cost_saved FLOAT
+  agent_hourly_cost FLOAT DEFAULT 500.0
+  calculated_at TIMESTAMP DEFAULT NOW()
+
+Seed the database with:
+- Default confidence thresholds (85/60) for all 7 use cases
+- Default SLA configs for all use case + priority combinations
+- 4 agent groups with correct members:
+  SharePoint Support Group → Bhaskar, Neha, Madhura, Yogesh, Datta
+  License Management Group → Neha, Madhura, Datta
+  DL Management Group → Neha, Madhura, Datta
+  L2 Windows Support Group → Ajay, Ankit, Hadi, Shameem, Datta
+- Datta has priority_order=999 in all groups (fallback)
+- All 7 SOPs from the /sops/ folder with embeddings
+
+════════════════════════════════════════════════════════════
+SECTION 5 — BACKEND: FastAPI APPLICATION
+════════════════════════════════════════════════════════════
+
+Framework: FastAPI (Python 3.11+)
+Key packages: fastapi, uvicorn, sqlalchemy, alembic, asyncpg,
+  pydantic, pydantic-settings, celery, redis, elasticsearch,
+  langchain, langchain-openai, openai, pgvector, paramiko,
+  httpx, python-jose, passlib, python-multipart
+
+5.1 ENVIRONMENT VARIABLES (.env)
+  DATABASE_URL=postgresql+asyncpg://...
+  REDIS_URL=redis://localhost:6379
+  ELASTICSEARCH_URL=http://localhost:9200
+  AZURE_OPENAI_ENDPOINT=https://...
+  AZURE_OPENAI_API_KEY=...
+  AZURE_OPENAI_DEPLOYMENT=gpt-4o
+  AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-3-large
+  FRESHSERVICE_BASE_URL=https://yourdomain.freshservice.com
+  FRESHSERVICE_API_KEY=...
+  GRAPH_API_TENANT_ID=...
+  GRAPH_API_CLIENT_ID=...
+  GRAPH_API_CLIENT_SECRET=...
+  GOOGLE_CLIENT_ID=...
+  GOOGLE_CLIENT_SECRET=...
+  JWT_SECRET_KEY=...
+  JWT_ALGORITHM=HS256
+  WINRM_USERNAME=...
+  WINRM_PASSWORD=...
+  AGENT_HOURLY_COST=500.0
+  AVG_MANUAL_RESOLUTION_MINS=45.0
+
+5.2 AUTHENTICATION
+  Implement OAuth 2.0 + Google Workspace SSO
+  JWT token generation and validation
+  RBAC middleware: admin, agent, readonly roles
+  Protect all routes with role-based dependencies
+  Token refresh endpoint
+
+5.3 API ROUTES — implement ALL of these:
+
+AUTH:
+  POST /api/v1/auth/google              Google OAuth callback
+  POST /api/v1/auth/refresh             Refresh JWT token
+  GET  /api/v1/auth/me                  Current user profile
+
+TICKETS:
+  GET    /api/v1/tickets                List tickets (filter by 
+                                        status, use_case, priority,
+                                        sla_status, date range)
+  POST   /api/v1/tickets                Create ticket
+  GET    /api/v1/tickets/{id}           Get ticket detail
+  PATCH  /api/v1/tickets/{id}           Update ticket
+  DELETE /api/v1/tickets/{id}           Delete ticket
+  POST   /api/v1/tickets/{id}/resolve   Trigger AI resolution
+  POST   /api/v1/tickets/{id}/escalate  Manual escalation
+  GET    /api/v1/tickets/{id}/notes     Get ticket notes
+  POST   /api/v1/tickets/{id}/notes     Add note to ticket
+  GET    /api/v1/tickets/{id}/timeline  Full ticket audit timeline
+
+CHAT (Priyanka's integration point):
+  POST /api/v1/chat/message
+    Request body: {
+      user_id: string,
+      session_id: string,
+      message: string,
+      platform: "google_chat" | "web_dashboard",
+      context: object (optional)
+    }
+    Response: {
+      reply: string,
+      ticket_id: string (if created),
+      action_taken: string,
+      requires_input: boolean,
+      input_prompt: string (if requires_input),
+      session_id: string
+    }
+
+DASHBOARD:
+  GET /api/v1/dashboard/summary
+    Returns: {
+      total_open: int,
+      resolved_today: int,
+      sla_met_percent: float,
+      auto_resolution_rate: float,
+      tickets_by_use_case: object,
+      tickets_by_status: object,
+      sla_at_risk_count: int,
+      avg_resolution_time_mins: float
+    }
+  GET /api/v1/dashboard/live-queue
+    Returns live open tickets with SLA risk status
+    Poll every 30 seconds from frontend
+  GET /api/v1/dashboard/sla-at-risk
+    Returns tickets with sla_status = at_risk or breached
+
+REPORTS:
+  GET /api/v1/reports/resolution-rate   By use case + date range
+  GET /api/v1/reports/sla-compliance    SLA met vs breached
+  GET /api/v1/reports/agent-performance By agent
+  GET /api/v1/reports/ticket-trends     Volume over time
+  GET /api/v1/reports/ai-accuracy       Confidence score analytics
+  GET /api/v1/reports/export            CSV export (any report)
+
+ROI:
+  GET  /api/v1/roi/current              Current period ROI
+  GET  /api/v1/roi/history              Historical ROI by period
+  POST /api/v1/roi/recalculate          Trigger recalculation
+  PATCH /api/v1/roi/settings            Update hourly cost config
+
+LOGS:
+  GET /api/v1/logs/audit                Paginated audit logs
+  GET /api/v1/logs/api-calls            API call logs
+  GET /api/v1/logs/powershell           PowerShell execution logs
+  GET /api/v1/logs/search               Full-text search via ES
+
+ADMIN:
+  GET    /api/v1/admin/thresholds       Get confidence thresholds
+  PATCH  /api/v1/admin/thresholds/{id}  Update threshold per use_case
+  GET    /api/v1/admin/sla-configs      Get SLA configs
+  PATCH  /api/v1/admin/sla-configs/{id} Update SLA config
+  GET    /api/v1/admin/groups           Get agent groups
+  PATCH  /api/v1/admin/groups/{id}      Update assignment mode
+  GET    /api/v1/admin/agents           List agents
+  POST   /api/v1/admin/agents           Add agent
+  PATCH  /api/v1/admin/agents/{id}      Update agent
+
+SOPS:
+  GET    /api/v1/sops                   List all SOPs
+  POST   /api/v1/sops                   Upload new SOP + embed
+  GET    /api/v1/sops/{id}              Get SOP detail
+  PATCH  /api/v1/sops/{id}              Update SOP + re-embed
+  DELETE /api/v1/sops/{id}              Deactivate SOP
+  POST   /api/v1/sops/search            Semantic search SOPs
+
+════════════════════════════════════════════════════════════
+SECTION 6 — AI & INTELLIGENCE ENGINE
+════════════════════════════════════════════════════════════
+
+6.1 CONFIDENCE SCORER (confidence_scorer.py)
+Calculate confidence score 0-100% using 4 weighted factors:
+
+  Factor 1 — Intent Clarity (weight: 30%)
+    Score based on how clearly GPT-4o understood the intent
+    Use GPT-4o to return a clarity score 0-1 with reasoning
+
+  Factor 2 — SOP Match (weight: 35%)
+    Score = cosine similarity between ticket embedding and 
+    best matching SOP embedding from pgvector
+    Normalize to 0-100
+
+  Factor 3 — Historical Success (weight: 25%)
+    Query ai_resolutions table:
+    success_rate = (successful auto_resolutions for same use_case) 
+                   / (total auto_resolutions for same use_case)
+    Default to 0.7 if no history
+
+  Factor 4 — Input Completeness (weight: 10%)
+    Check required fields per use case:
+    sharepoint: [site_url, request_type, user_email]
+    license: [license_type, user_email, business_justification]
+    dl_update: [dl_name, action_type, user_email]
+    windows: [device_name, issue_type, user_id]
+    Score = fields_present / total_required_fields
+
+  Final score = (clarity*0.30) + (sop*0.35) + (history*0.25) 
+                + (completeness*0.10)
+
+  Decision:
+    >= threshold.auto_resolve_min → decision: auto_resolve
+    >= threshold.review_after_min → decision: review_after  
+    < threshold.review_after_min  → decision: escalate
+
+6.2 RAG PIPELINE (rag_pipeline.py)
+  - Use Azure OpenAI text-embedding-3-large to embed ticket
+  - Query pgvector with cosine similarity:
+    SELECT * FROM sops 
+    WHERE use_case = :use_case AND is_active = TRUE
+    ORDER BY embedding_vector <=> :query_vector
+    LIMIT 3
+  - Return top 3 SOPs as context for LangChain agent
+  - Cache embedding results in Redis (TTL: 1 hour)
+
+6.3 LANGCHAIN AGENTS
+  Build a master LangChain agent with tools:
+
+  Tools:
+    - get_ticket_info(ticket_id) → fetch ticket from DB
+    - retrieve_sop(use_case, query) → RAG pipeline
+    - calculate_confidence(ticket_data) → confidence scorer
+    - execute_sharepoint_action(action, params) → Graph API
+    - execute_license_action(license_type, action, user) → License API
+    - execute_dl_action(action, dl_name, user) → Graph API
+    - execute_powershell(device, script_name, params) → WinRM
+    - update_freshservice_ticket(ticket_id, status, notes)
+    - escalate_ticket(ticket_id, group, reason)
+    - notify_user(user_id, message, platform)
+
+  Agent system prompt:
+    "You are STACK AI, an enterprise IT service desk automation 
+    agent for Jade Global Software Pvt Ltd. You resolve IT tickets
+    autonomously using approved SOPs. You are precise, professional,
+    and always log your actions. When confidence is below threshold,
+    you escalate gracefully with full context. Never take destructive
+    actions without confirmation. Always update Freshservice after
+    every action."
+
+  Use Cases — build separate agent chains:
+
+  UC-01 SHAREPOINT (sharepoint_agent.py):
+    Intent options: access_grant, access_revoke, 
+                    permission_update, site_create, 
+                    site_modify, ownership_transfer
+    Auto-resolution via Microsoft Graph API:
+      - MSAL authentication with client credentials
+      - Sites.ReadWrite.All, Directory.ReadWrite.All scopes
+      - Grant access: POST /sites/{id}/permissions
+      - Revoke access: DELETE /sites/{id}/permissions/{perm-id}
+      - Update permissions: PATCH /sites/{id}/permissions
+      - Create site: POST /sites (with SharePoint admin endpoint)
+      - Transfer ownership: PATCH /groups/{id}/owners
+
+  UC-02 LICENSE (license_agent.py):
+    License types: bluebeam, adobe, o365
+    Before provisioning: check if user already has license
+      O365: GET /users/{id}/licenseDetails via Graph API
+      Adobe/BlueBeam: call respective vendor APIs
+    O365 provisioning: POST /users/{id}/assignLicense
+    O365 revocation: POST /users/{id}/assignLicense 
+                     with removeLicenses
+    Adobe: Adobe User Management API
+           POST /action/users (addRoles action)
+    BlueBeam: BlueBeam Studio REST API
+              POST /api/users/{id}/licenses
+    Always validate provisioning success before closing ticket
+
+  UC-03 DL UPDATES (dl_agent.py):
+    Actions: add_member, remove_member, create_dl, modify_dl
+    Validate DL exists: GET /groups?$filter=mail eq '{dl_email}'
+    If not exists and action requires it → create first:
+      POST /groups (mailEnabled, securityEnabled, groupTypes)
+    Add member: POST /groups/{id}/members/$ref
+    Remove member: DELETE /groups/{id}/members/{user_id}/$ref
+    Modify DL: PATCH /groups/{id}
+    Retry logic: retry once on failure before escalating
+    Verify success with GET /groups/{id}/members after operation
+
+  UC-04 WINDOWS TROUBLESHOOTING (windows_agent.py):
+    Issue categories: password_reset, printer, software_install,
+      software_uninstall, disk_cleanup, performance, network
+    PowerShell/WinRM execution:
+      - Use pywinrm library to connect
+      - Authenticate with WINRM_USERNAME/PASSWORD from env
+      - HTTPS transport, validate_server_cert=False (internal)
+      - Execute scripts from /scripts/windows/
+      - Capture stdout, stderr, return code
+      - Timeout: 120 seconds
+    Script mapping:
+      password_reset → password_reset.ps1
+      printer → printer_fix.ps1
+      software_install → software_install.ps1
+      software_uninstall → software_uninstall.ps1
+      disk_cleanup → disk_cleanup.ps1
+      performance → performance_fix.ps1
+      network → network_reset.ps1
+    Log full execution output to powershell_executions table
+
+6.4 SLA PREDICTOR (sla_predictor.py)
+  Celery task runs every 5 minutes:
+  For each open ticket:
+    1. Get sla_deadline and current time
+    2. Calculate time_remaining = sla_deadline - now()
+    3. Get avg_resolution_time for this use_case from history
+    4. Get current queue depth for this use_case
+    5. Estimate predicted_resolution = avg_time * (1 + queue_factor)
+    6. If time_remaining > predicted_resolution * 1.5 → safe
+    7. If time_remaining > predicted_resolution → at_risk
+    8. If time_remaining <= predicted_resolution → breached
+    Update ticket.sla_status accordingly
+    Log to audit_logs with event_type=sla_at_risk or sla_breached
+
+6.5 ESCALATION ENGINE
+  When decision = escalate:
+    1. Get agent group for ticket.use_case
+    2. Get group.assignment_mode
+    3. Select agent:
+       round_robin: pick next agent in rotation 
+                    (track last assigned in Redis)
+       first_available: query Freshservice agent availability
+       priority: pick agent with lowest priority_order
+    4. Datta fallback: if selected agent unavailable, 
+       assign to Datta (priority_order=999)
+    5. Call freshservice_service.assign_ticket(ticket_id, agent)
+    6. Add ai_context note with:
+       - What was attempted
+       - Why it failed/confidence was low
+       - Recommended next steps from SOP
+       - Confidence score breakdown
+    7. Update ticket status to 'escalated'
+    8. Notify user via notification_service
+
+════════════════════════════════════════════════════════════
+SECTION 7 — INTEGRATIONS
+════════════════════════════════════════════════════════════
+
+7.1 FRESHSERVICE (freshservice_service.py)
+  Base URL: https://{domain}.freshservice.com/api/v2
+  Auth: API key as Base64 in Authorization header
+  
+  Implement:
+    create_ticket(title, desc, priority, use_case, requester_id)
+    get_ticket(freshservice_ticket_id)
+    update_ticket(id, status, priority, assignee_group)
+    add_note(ticket_id, content, private=True)
+    close_ticket(ticket_id, resolution_note)
+    assign_ticket(ticket_id, agent_id, group_id)
+    get_agent_availability(agent_id)
+    sync_ticket_from_freshservice(webhook_payload)
+  
+  Webhook: register Freshservice webhook to POST to 
+    /api/v1/tickets/freshservice-webhook
+  Log every API call to api_call_logs table
+
+7.2 MICROSOFT GRAPH API (graph_api_service.py)
+  Auth: MSAL with client credentials flow
+    tenant_id, client_id, client_secret from env
+    Scope: https://graph.microsoft.com/.default
+  Token caching in Redis (TTL: 3500 seconds)
+  
+  Implement all SharePoint and DL operations from Section 6
+  Log every Graph API call to api_call_logs
+
+7.3 LICENSE APIS (license_service.py)
+  O365: Use Graph API (same MSAL token)
+    assignLicense, removeLicense, getLicenseDetails
+  Adobe: Adobe User Management API v2
+    Auth: JWT + API key
+    Endpoints: /action/users for assign/remove
+  BlueBeam: BlueBeam Studio REST API
+    Auth: OAuth2
+    Endpoints per BlueBeam API docs
+  For Adobe and BlueBeam: create mock implementations
+  with TODO comments where real credentials go
+
+7.4 POWERSHELL / WINRM (powershell_service.py)
+  Use pywinrm:
+    import winrm
+    session = winrm.Session(
+      device_ip, 
+      auth=(WINRM_USERNAME, WINRM_PASSWORD),
+      transport='ntlm',
+      server_cert_validation='ignore'
+    )
+    result = session.run_ps(script_content)
+  
+  Build all 7 PowerShell scripts with real logic:
+  
+  password_reset.ps1:
+    Reset-ADAccountPassword -Identity $username 
+      -NewPassword (ConvertTo-SecureString $newPwd 
+      -AsPlainText -Force) -Reset
+    Set-ADUser -Identity $username 
+      -ChangePasswordAtLogon $true
+    Unlock-ADAccount -Identity $username
+  
+  printer_fix.ps1:
+    Stop-Service -Name Spooler -Force
+    Start-Service -Name Spooler
+    Remove-PrintJob -PrinterName $printerName -ID *
+    (optionally reinstall driver)
+  
+  software_install.ps1:
+    winget install $packageId --silent --accept-package-agreements
+    or msiexec /i $msiPath /quiet /norestart
+  
+  software_uninstall.ps1:
+    winget uninstall $packageId --silent
+    or Get-WmiObject + .Uninstall()
+  
+  disk_cleanup.ps1:
+    Remove-Item "$env:TEMP\*" -Recurse -Force -ErrorAction SilentlyContinue
+    cleanmgr /sagerun:1
+    Get-ChildItem C:\ -Recurse | Sort-Object Length -Descending | 
+      Select-Object -First 20 | Format-Table FullName, Length
+  
+  performance_fix.ps1:
+    Get-Process | Sort-Object CPU -Descending | 
+      Select-Object -First 10
+    (kill processes above threshold with user confirmation)
+    Clear-RecycleBin -Force
+    ipconfig /flushdns
+  
+  network_reset.ps1:
+    netsh int ip reset
+    netsh winsock reset
+    ipconfig /flushdns
+    ipconfig /release
+    ipconfig /renew
+    Restart-NetAdapter -Name $adapterName
+
+════════════════════════════════════════════════════════════
+SECTION 8 — CELERY BACKGROUND TASKS
+════════════════════════════════════════════════════════════
+
+Configure Celery with Redis broker.
+Beat schedule:
+
+  sla_monitor — every 5 minutes
+    Monitor all open tickets for SLA risk
+    Update sla_status field
+    Log to audit_logs
+    Send alerts for breached tickets
+
+  roi_calculator — daily at midnight
+    Count auto_resolved vs total tickets for period
+    Calculate hours_saved = auto_resolved * avg_manual_mins / 60
+    Calculate cost_saved = hours_saved * agent_hourly_cost
+    Store in roi_metrics table
+
+  ticket_sync — every 15 minutes
+    Pull any new/updated tickets from Freshservice API
+    Sync status changes back to local DB
+    Trigger AI resolution for newly ingested open tickets
+
+  log_shipper — every 1 minute
+    Batch ship audit_logs and api_call_logs to Elasticsearch
+    Index: stack_audit_logs, stack_api_logs
+
+════════════════════════════════════════════════════════════
+SECTION 9 — ELASTICSEARCH LOGGING
+════════════════════════════════════════════════════════════
+
+Elasticsearch indices:
+  stack_audit_logs — all audit events
+  stack_api_logs — all API calls
+  stack_tickets — ticket snapshots for search
+  stack_ps_executions — PowerShell execution logs
+
+Every action in the system MUST log to Elasticsearch:
+  ticket_created, ai_triage, auto_resolved, escalated,
+  human_resolved, sla_breached, sla_at_risk,
+  powershell_executed, api_called, user_notified,
+  confidence_scored, sop_matched
+
+Log schema (all indices):
+  timestamp, event_type, ticket_id, actor, actor_type,
+  use_case, details (full JSON), duration_ms, status
+
+/api/v1/logs/search: 
+  Full-text search across all Elasticsearch indices
+  Support filters: date_range, event_type, use_case, actor
+
+════════════════════════════════════════════════════════════
+SECTION 10 — REACT FRONTEND DASHBOARD
+════════════════════════════════════════════════════════════
+
+Stack: React 18 + Vite + Ant Design 5 + Redux Toolkit
+       + Axios + React Query + ECharts + Recharts
+
+Brand: Navy #1B3A6B, Orange #F47920, Cyan #0097A7
+Font: Inter or Montserrat via Google Fonts
+STACK logo in top-left of sidebar
+
+10.1 LAYOUT (AppLayout.jsx)
+  Fixed sidebar (240px wide, navy background)
+  Top bar with: STACK logo, user avatar, notifications bell,
+    logout button
+  Breadcrumbs
+  Main content area (scrollable)
+  Sidebar navigation items:
+    🏠 Dashboard (home/overview)
+    🎫 Tickets (live queue)
+    📋 Logs (audit trail)
+    📊 Reports (analytics)
+    💰 ROI Dashboard
+    ⚙️ Admin (config panel)
+    📄 SOP Manager
+    Active item highlighted in orange
+
+10.2 DASHBOARD PAGE (Dashboard.jsx)
+  Top KPI cards row (4 cards):
+    Card 1: Total Open Tickets (blue, ticket icon)
+    Card 2: Resolved Today (green, checkmark)
+    Card 3: SLA Compliance % (orange, clock)
+    Card 4: Auto-Resolution Rate % (cyan, robot icon)
+  
+  Row 2 — charts (2 columns):
+    Left: Ticket Volume by Use Case (bar chart - ECharts)
+      x-axis: SharePoint Access, SharePoint Admin, 
+              BlueBeam License, Adobe License, O365 License,
+              DL Update, Windows Troubleshooting
+      y-axis: ticket count
+      Colors: navy bars with orange accent
+    Right: Resolution Type Pie (auto vs manual) - ECharts
+  
+  Row 3 — live SLA risk panel:
+    Table: Top 10 at-risk tickets
+    Columns: Ticket ID, Title, Use Case, Priority, 
+             SLA Deadline, SLA Status (badge), AI Confidence
+    SLA badge: 🟢 Safe / 🟡 At Risk / 🔴 Breach Imminent
+    Auto-refresh every 30 seconds
+  
+  Row 4 — recent activity feed:
+    Last 20 audit log events in chronological order
+    Show: timestamp, event type, actor, description
+
+10.3 TICKETS PAGE (Tickets.jsx + TicketDetail.jsx)
+  Filters bar: status, use_case, priority, sla_status, 
+               date range, search box
+  
+  Tickets table columns:
+    Ticket ID (link to detail), Title, Use Case (tag),
+    Status (colored tag), Priority (badge), 
+    SLA Risk (colored badge), AI Confidence %,
+    Assigned Agent, Created At, Actions (view/resolve)
+  
+  Status colors:
+    open → blue, in_progress → orange, 
+    auto_resolved → green, escalated → red, closed → grey
+  
+  Action buttons per row:
+    View Details, Trigger AI Resolution, Escalate, Close
+  
+  TicketDetail.jsx — full ticket view:
+    Header: ticket title, ID, status badge, priority
+    Info grid: use_case, source, user, agent, SLA deadline
+    AI Resolution panel:
+      Confidence score (circular progress, color-coded)
+      4 sub-scores as mini progress bars
+      Decision badge (auto/review/escalate)
+      Resolution steps (expandable list)
+      Execution output (code block)
+    Notes timeline (all ticket notes in chronological order)
+    Audit trail (expandable, all events for this ticket)
+    Action buttons: Add Note, Resolve, Escalate, Close
+
+10.4 LOGS PAGE (Logs.jsx)
+  3 tabs: Audit Logs | API Call Logs | PowerShell Executions
+  
+  Audit Logs tab:
+    Full-text search via Elasticsearch
+    Filters: event_type, actor_type, date range, use_case
+    Table: timestamp, event_type, actor, ticket_id, details
+    Click row to expand full details JSON
+  
+  API Call Logs tab:
+    Filters: api_name, status_code, date range
+    Table: timestamp, api_name, endpoint, method, 
+           status_code, duration_ms, ticket_id
+    Color code: 2xx green, 4xx orange, 5xx red
+  
+  PowerShell Executions tab:
+    Table: timestamp, device_name, script_name, 
+           status, duration_seconds, ticket_id
+    Click to expand: full script output log
+
+10.5 REPORTS PAGE (Reports.jsx)
+  Date range picker at top (default: last 30 days)
+  Export to CSV button
+  
+  6 report sections:
+  
+  1. Resolution Rate by Use Case
+     Grouped bar chart: auto vs manual per use case
+     Table below with exact numbers + percentages
+  
+  2. SLA Compliance
+     Donut chart: met vs breached
+     Line chart: SLA compliance % over time
+     Table: by use case + priority breakdown
+  
+  3. Average Resolution Time
+     Side-by-side bar: AI resolution time vs Human time
+     Show time saved per use case
+  
+  4. AI Accuracy Analytics
+     Line chart: avg confidence score over time
+     Histogram: distribution of confidence scores
+     Table: intent detection accuracy per use case
+  
+  5. Ticket Trends
+     Area chart: total tickets over time (daily/weekly/monthly)
+     Stacked by use case
+  
+  6. Agent Performance (for escalated tickets)
+     Table: agent name, tickets handled, avg resolution time,
+            user satisfaction (if available)
+
+10.6 ROI DASHBOARD (ROIDashboard.jsx)
+  Top banner: "STACK has saved Jade Global X hours and ₹Y this month"
+  (calculate dynamically from roi_metrics)
+  
+  KPI cards row:
+    Tickets Auto-Resolved: count + percentage
+    Hours Saved: calculated value
+    Cost Saved: ₹ value (hours * agent_hourly_cost)
+    Agent Capacity Freed: percentage
+  
+  Charts row:
+    Left: Monthly ROI Trend (line chart, last 6 months)
+      Two lines: hours_saved, cost_saved
+    Right: Cost Per Ticket comparison (bar chart)
+      Two bars: AI cost per ticket vs Human cost per ticket
+  
+  Payback Period Indicator:
+    Progress bar showing estimated payback progress
+    Label: "Estimated Payback: X months"
+  
+  Settings panel (admin only):
+    Input: Agent Hourly Cost (₹)
+    Input: Average Manual Resolution Time (minutes)
+    Save button → PATCH /api/v1/roi/settings
+
+10.7 ADMIN PAGE (Admin.jsx)
+  4 tabs: Confidence Thresholds | SLA Config | 
+          Agent Groups | System Settings
+
+  Confidence Thresholds tab:
+    Table with one row per use_case:
+    Use Case | Auto-Resolve Min % | Review After Min % | Edit
+    Inline edit with save confirmation
+    Reset to defaults button
+
+  SLA Config tab:
+    Grid: use_case rows × priority columns
+    Each cell: resolution_hours (editable)
+    Warning threshold % per use case (slider)
+
+  Agent Groups tab:
+    4 group cards (SharePoint, License, DL, Windows):
+    Each card shows:
+      Group name, Use case
+      Assignment Mode (dropdown: round_robin/first_available/priority)
+      Members list with priority_order
+      Add/remove members
+      Datta highlighted as fallback (gold badge)
+
+  System Settings tab:
+    Freshservice webhook URL
+    Elasticsearch index management
+    SOP re-embedding trigger button
+    Celery task status panel
+
+10.8 SOP MANAGER (SOPManager.jsx)
+  List of all SOPs with: title, use_case, version, 
+    is_active, last_updated
+  Upload new SOP (markdown file) → auto-embeds via API
+  Edit SOP content (markdown editor with preview)
+  Semantic search: "Find SOPs similar to: [query]"
+  Toggle active/inactive
+  Version history per SOP
+
+10.9 COMMON COMPONENTS
+  SLABadge.jsx:
+    safe → green tag "✅ Safe"
+    at_risk → yellow/orange tag "⚠️ At Risk"
+    breached → red tag "🔴 Breach Imminent"
+  
+  ConfidenceBadge.jsx:
+    >= 85 → green circular badge
+    60-84 → orange circular badge
+    < 60 → red circular badge
+    Show score number inside
+  
+  StatusTag.jsx: colored Ant Design tag per status value
+  
+  All pages: loading skeletons while data fetches
+  All tables: pagination (20 rows default)
+  All pages: error boundary with friendly error message
+
+════════════════════════════════════════════════════════════
+SECTION 11 — GOOGLE CHAT BOT (Priyanka's Module)
+════════════════════════════════════════════════════════════
+
+Framework: Python FastAPI webhook app
+Integration: Google Chat API with app mentions and DMs
+Auth: Google OAuth2 Service Account
+
+11.1 WEBHOOK HANDLER (webhook_handler.py)
+  POST /webhook/google-chat
+  Handle event types:
+    MESSAGE → process user message
+    ADDED_TO_SPACE → send welcome message
+    REMOVED_FROM_SPACE → cleanup
+    CARD_CLICKED → handle button interactions
+
+11.2 CONVERSATION FLOWS
+  All flows call Nikhil's /api/v1/chat/message endpoint.
+  Bot manages conversation state in Redis:
+    Key: "chat_session:{session_id}"
+    Value: {current_flow, step, collected_data, ticket_id}
+    TTL: 30 minutes
+
+  WELCOME MESSAGE (when bot added or user says "hi/hello"):
+    "👋 Hi [Name]! I'm STACK AI, your IT service desk assistant
+    by Jade Global.
+    
+    I can help you with:
+    1️⃣ SharePoint access or admin requests
+    2️⃣ Software license requests (BlueBeam/Adobe/O365)
+    3️⃣ Distribution list updates
+    4️⃣ Windows troubleshooting
+    5️⃣ Check ticket status
+    
+    What do you need help with today?"
+    
+    Show as card with 5 buttons
+
+  SHAREPOINT FLOW (sharepoint_flow.py):
+    Step 1: Ask access vs admin request (buttons)
+    Step 2: Collect site URL
+    Step 3: Collect request details
+    Step 4: Confirm and submit → call /api/v1/chat/message
+    Step 5: Show ticket ID and expected resolution time
+    Step 6: On resolution → notify user with summary
+
+  LICENSE FLOW (license_flow.py):
+    Step 1: Which license? (BlueBeam/Adobe/O365 buttons)
+    Step 2: Assign or revoke? (buttons)
+    Step 3: Business justification (free text)
+    Step 4: Confirm → submit ticket
+    Step 5: Show provisioning status
+
+  DL FLOW (dl_flow.py):
+    Step 1: Action type (Add/Remove/Create/Modify buttons)
+    Step 2: DL name/email
+    Step 3: User email(s) to add/remove
+    Step 4: Confirm → submit
+    Step 5: Show completion status
+
+  WINDOWS FLOW (windows_flow.py):
+    Step 1: Issue type (6 buttons: password/printer/
+            software/performance/disk/network)
+    Step 2: Collect device name and OS
+    Step 3: Describe issue in detail (free text)
+    Step 4: Confirm → submit
+    Step 5: Show "AI is connecting to your device..."
+    Step 6: Show resolution summary or escalation notice
+
+  STATUS CHECK:
+    "Check my ticket" or "ticket status" or ticket ID
+    → call GET /api/v1/tickets/{id}
+    → show card with status, SLA, assigned agent
+
+  ESCALATION NOTIFICATION:
+    When ticket escalated → bot sends:
+    "Your ticket [#ID] has been assigned to our support team.
+    [Agent Name] will reach out to you shortly.
+    Reference: [ticket_id]"
+
+  RESOLUTION NOTIFICATION:
+    When ticket resolved → bot sends:
+    "✅ Your [use_case] request has been resolved!
+    
+    What was done: [resolution_summary]
+    Time taken: [X minutes]
+    Ticket ID: [#ID]
+    
+    Was this helpful? [👍 Yes] [👎 No]"
+
+11.3 CARD TEMPLATES
+  Use Google Chat Card v2 format (JSON)
+  All cards use STACK navy + orange color scheme
+  Cards for: ticket confirmation, resolution notice,
+             escalation notice, status check, welcome
+
+════════════════════════════════════════════════════════════
+SECTION 12 — DOCKER COMPOSE DEPLOYMENT
+════════════════════════════════════════════════════════════
+
+docker-compose.yml services:
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    volumes: postgres_data:/var/lib/postgresql/data
+    env: POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
+    healthcheck: pg_isready
+
+  redis:
+    image: redis:7-alpine
+    volumes: redis_data:/data
+    command: redis-server --appendonly yes
+
+  elasticsearch:
+    image: elasticsearch:8.12.0
+    env: discovery.type=single-node, xpack.security.enabled=false
+    volumes: es_data:/usr/share/elasticsearch/data
+    ports: 9200
+
+  kibana:
+    image: kibana:8.12.0
+    depends_on: elasticsearch
+    ports: 5601
+
+  backend:
+    build: ./docker/backend.Dockerfile
+    depends_on: postgres, redis, elasticsearch
+    volumes: ./backend:/app
+    env_file: ./backend/.env
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    ports: 8000
+
+  celery_worker:
+    build: ./docker/backend.Dockerfile
+    depends_on: postgres, redis
+    command: celery -A app.core.celery_app worker --loglevel=info
+    env_file: ./backend/.env
+
+  celery_beat:
+    build: ./docker/backend.Dockerfile
+    depends_on: redis
+    command: celery -A app.core.celery_app beat --loglevel=info
+    env_file: ./backend/.env
+
+  frontend:
+    build: ./docker/frontend.Dockerfile
+    depends_on: backend
+    volumes: ./frontend:/app
+    ports: 3000
+
+  chatbot:
+    build: ./docker/chatbot.Dockerfile
+    depends_on: backend
+    volumes: ./chatbot:/app
+    env_file: ./chatbot/.env
+    ports: 8001
+
+  nginx:
+    image: nginx:alpine
+    volumes: ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on: backend, frontend
+    ports: 80, 443
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes: grafana_data:/var/lib/grafana
+    ports: 3001
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes: ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports: 9090
+
+nginx.conf routing:
+  / → frontend:3000
+  /api/ → backend:8000
+  /webhook/ → chatbot:8001
+  /kibana/ → kibana:5601
+  /grafana/ → grafana:3001
+
+════════════════════════════════════════════════════════════
+SECTION 13 — SOP DOCUMENTS
+════════════════════════════════════════════════════════════
+
+Create all 7 SOP markdown files in /sops/ with detailed 
+step-by-step resolution procedures:
+
+sops/sharepoint_access.md:
+  Title: SharePoint Access Management SOP
+  Covers: grant access, revoke access, permission updates
+  Steps: validate user identity, check existing permissions,
+         call Graph API, confirm change, notify user
+  Required inputs: site_url, user_email, permission_level,
+                   business_justification
+
+sops/sharepoint_admin.md:
+  Title: SharePoint Administration SOP  
+  Covers: site creation, settings change, ownership transfer
+  Steps: validate admin rights, execute changes via Graph API
+  Required inputs: site_name, site_type, owner_email
+
+sops/license_bluebeam.md:
+  Title: BlueBeam License Provisioning SOP
+  Covers: assign, revoke BlueBeam Revu licenses
+  Steps: verify eligibility, check available licenses,
+         call BlueBeam API, confirm activation
+  Required inputs: user_email, license_type, justification
+
+sops/license_adobe.md:
+  Title: Adobe Creative Cloud License SOP
+  Covers: assign, revoke Adobe licenses
+  Steps: check Adobe Admin Console, assign via API,
+         verify email confirmation
+  Required inputs: user_email, product_profile, justification
+
+sops/license_o365.md:
+  Title: Microsoft O365 License SOP
+  Covers: assign, revoke O365 licenses
+  Steps: check license pool, assign via Graph API,
+         validate service plan activation
+  Required inputs: user_email, license_sku, justification
+
+sops/dl_update.md:
+  Title: O365 Distribution List Management SOP
+  Covers: add member, remove member, create DL, modify DL
+  Steps: validate DL existence, validate user, 
+         execute Graph API operation, confirm membership
+  Required inputs: dl_email, action, user_email(s)
+
+sops/windows_troubleshooting.md:
+  Title: Windows Troubleshooting SOP
+  Covers: all 6 issue types with step-by-step PowerShell
+  Required inputs: device_name, device_ip, user_id, issue_type
+
+Build sop_ingest/ingest_sops.py:
+  Read all .md files from /sops/
+  For each: generate Azure OpenAI embedding (1536 dim)
+  Upsert to sops table (by title + use_case)
+  Print progress: "✅ Ingested: [sop_name]"
+  Run this automatically on backend startup if sops table empty
+
+════════════════════════════════════════════════════════════
+SECTION 14 — SECURITY IMPLEMENTATION
+════════════════════════════════════════════════════════════
+
+  All API endpoints: require valid JWT in Authorization header
+  Admin routes: require role=admin
+  Agent routes: require role=admin or role=agent
+  Read-only routes: all authenticated users
+  
+  HTTPS: Nginx TLS termination (self-signed cert for on-prem)
+  
+  RBAC middleware:
+    def require_role(roles: List[str]):
+      dependency that checks current_user.role
+  
+  WinRM: encrypted NTLM/HTTPS transport
+  All external API calls: logged to api_call_logs
+  Azure OpenAI: data stays in tenant (no external sharing)
+  
+  CORS: allow only frontend origin
+  Rate limiting: 100 req/min per user (Redis-based)
+  
+  Audit trail: every data mutation writes to audit_logs
+    with actor, ip_address, details
+
+════════════════════════════════════════════════════════════
+SECTION 15 — COMMUNICATION BETWEEN APPLICATIONS
+════════════════════════════════════════════════════════════
+
+Frontend ↔ Backend:
+  Axios with base URL /api/v1
+  JWT in Authorization: Bearer {token} header
+  React Query for caching + polling
+  Polling interval for live data: 30 seconds
+  WebSocket (optional): for real-time ticket updates
+    WS endpoint: /ws/tickets
+
+Chatbot ↔ Backend (Priyanka ↔ Nikhil):
+  Single integration point: POST /api/v1/chat/message
+  Bot sends: user_id, session_id, message, platform, context
+  Backend returns: reply, ticket_id, action_taken, 
+                   requires_input, input_prompt
+  Bot manages conversation state in Redis independently
+  Bot polls GET /api/v1/tickets/{id} for status updates
+  
+Backend ↔ Freshservice:
+  REST API v2 with API key auth
+  Webhook from Freshservice → /api/v1/tickets/freshservice-webhook
+  
+Backend ↔ Microsoft Graph:
+  MSAL token cached in Redis
+  All Graph calls go through graph_api_service.py
+  
+Backend ↔ Elasticsearch:
+  Async elasticsearch-py client
+  Bulk indexing via log_shipper Celery task
+  
+Backend ↔ Azure OpenAI:
+  langchain-openai AzureChatOpenAI + AzureOpenAIEmbeddings
+  All calls logged to api_call_logs (api_name=azure_openai)
+
+════════════════════════════════════════════════════════════
+SECTION 16 — DEVELOPMENT CONVENTIONS
+════════════════════════════════════════════════════════════
+
+Git branches:
+  main — production ready
+  dev — development integration
+  nikhil/feature-* — Nikhil's feature branches
+  priyanka/chatbot-* — Priyanka's bot branches
+  Nikhil owns all merges to main and dev
+
+API versioning: all routes under /api/v1/
+Response format (all endpoints):
+  Success: { "success": true, "data": {...}, "message": "..." }
+  Error: { "success": false, "error": "...", "detail": "..." }
+
+Error handling:
+  All services: try/except with specific exception types
+  Log errors to Elasticsearch and audit_logs
+  Return meaningful HTTP status codes
+  Never expose stack traces to client
+
+Environment management:
+  .env.example for every app (backend, frontend, chatbot)
+  Never commit .env files
+  Use pydantic-settings for backend config validation
+
+Code quality:
+  Type hints on all Python functions
+  JSDoc comments on React components
+  Meaningful variable names throughout
+  No hardcoded credentials anywhere
+
+════════════════════════════════════════════════════════════
+SECTION 17 — STARTUP & README
+════════════════════════════════════════════════════════════
+
+Create README.md at project root with:
+  Project overview (use STACK branding)
+  Prerequisites: Python 3.11+, Node 18+, Docker, Docker Compose
+  Quick start:
+    1. Clone repo
+    2. Copy .env.example → .env for each app
+    3. Fill in API keys and credentials
+    4. docker-compose up --build
+    5. Run: python scripts/sop_ingest/ingest_sops.py
+    6. Access: http://localhost (dashboard)
+               http://localhost/api/docs (Swagger)
+  
+  Architecture overview (reference architecture diagram)
+  Team: Nikhil (backend/AI/frontend), Priyanka (chatbot)
+  Project Lead: Sanjay Deshpande
+  Project Guide: Dattatraya Girawale
+  Organization: Jade Global Software Pvt Ltd
+
+════════════════════════════════════════════════════════════
+SECTION 18 — BUILD ORDER
+════════════════════════════════════════════════════════════
+
+Build in this exact order:
+
+1. Project structure and all config files
+2. PostgreSQL models + Alembic migrations + seed data
+3. FastAPI core (config, auth, database, redis, ES clients)
+4. All FastAPI routes (stub implementations first)
+5. Freshservice service
+6. Microsoft Graph API service
+7. License services (O365 real, Adobe/BlueBeam mocked)
+8. PowerShell service + all 7 PS scripts
+9. AI confidence scorer
+10. RAG pipeline + pgvector queries
+11. LangChain agents (master + 4 use case agents)
+12. SLA predictor Celery task
+13. All Celery background tasks
+14. Elasticsearch logging integration
+15. React app: layout + routing + auth
+16. React Dashboard page
+17. React Tickets page + TicketDetail
+18. React Logs page
+19. React Reports page
+20. React ROI Dashboard
+21. React Admin page
+22. React SOP Manager
+23. Google Chat Bot (Priyanka's module)
+24. Docker Compose full stack
+25. Nginx config
+26. SOP documents + ingestion script
+27. README
+
+════════════════════════════════════════════════════════════
+CRITICAL REQUIREMENTS — NON-NEGOTIABLE
+════════════════════════════════════════════════════════════
+
+✅ EVERY API route must be implemented (no stubs in final code)
+✅ EVERY table in the DB schema must be created
+✅ Confidence score MUST use all 4 factors with correct weights
+✅ Escalation MUST assign to correct group per use case
+✅ Datta MUST be fallback in ALL 4 groups
+✅ ALL 4 use case agents must be fully implemented
+✅ /api/v1/chat/message MUST work for Priyanka's bot
+✅ ALL actions MUST be logged to both PostgreSQL and Elasticsearch
+✅ SLA monitor MUST run as Celery background task
+✅ ROI dashboard MUST be calculated from real DB data
+✅ ALL environment variables MUST be in .env (no hardcoding)
+✅ Docker Compose MUST bring up the entire stack
+✅ README MUST have complete setup instructions
+
+This is a production-grade enterprise application for 
+Jade Global Software Pvt Ltd. Build it to that standard.
