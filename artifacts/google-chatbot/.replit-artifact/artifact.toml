@@ -1,0 +1,23 @@
+kind = "api"
+  previewPath = "/chatbot"
+  title = "STACK Google Chat Bot"
+  version = "1.0.0"
+  id = "google-chatbot"
+
+  [[services]]
+  localPort = 9000
+  name = "Google Chat Bot"
+  paths = ["/chatbot"]
+
+  [services.development]
+  run = "python3 -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-9000} --log-level info"
+
+  [services.production.run]
+  args = ["python3", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "9000"]
+
+  [services.production.run.env]
+  PORT = "9000"
+
+  [services.production.health.startup]
+  path = "/chatbot/healthz"
+  

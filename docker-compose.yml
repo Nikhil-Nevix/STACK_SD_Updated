@@ -1,0 +1,207 @@
+version: "3.9"
+
+services:
+  # ── FastAPI Backend ────────────────────────────────────────────────────────
+  api:
+    build:
+      context: artifacts/api-server
+      dockerfile: Dockerfile
+    container_name: stack-api
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://stack:stack_password@postgres:5432/stack_db
+      - SESSION_SECRET=${SESSION_SECRET:-super-secret-change-in-prod}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      # Azure OpenAI (optional — AI activates when set)
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY:-}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT:-}
+      - AZURE_OPENAI_DEPLOYMENT=${AZURE_OPENAI_DEPLOYMENT:-gpt-4o}
+      - AZURE_OPENAI_EMBEDDING_DEPLOYMENT=${AZURE_OPENAI_EMBEDDING_DEPLOYMENT:-text-embedding-3-small}
+      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION:-2024-02-01}
+      # Freshservice (optional)
+      - FRESHSERVICE_DOMAIN=${FRESHSERVICE_DOMAIN:-}
+      - FRESHSERVICE_API_KEY=${FRESHSERVICE_API_KEY:-}
+      # Microsoft Graph API (optional)
+      - MS_TENANT_ID=${MS_TENANT_ID:-}
+      - MS_CLIENT_ID=${MS_CLIENT_ID:-}
+      - MS_CLIENT_SECRET=${MS_CLIENT_SECRET:-}
+      # License APIs (optional)
+      - ADOBE_CLIENT_ID=${ADOBE_CLIENT_ID:-}
+      - ADOBE_CLIENT_SECRET=${ADOBE_CLIENT_SECRET:-}
+      - BLUEBEAM_API_KEY=${BLUEBEAM_API_KEY:-}
+      # PowerShell/WinRM (optional)
+      - WINRM_USERNAME=${WINRM_USERNAME:-}
+      - WINRM_PASSWORD=${WINRM_PASSWORD:-}
+      - PORT=8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - stack-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ── Celery Worker ──────────────────────────────────────────────────────────
+  celery-worker:
+    build:
+      context: artifacts/api-server
+      dockerfile: Dockerfile
+    container_name: stack-celery-worker
+    restart: unless-stopped
+    command: celery -A app.tasks.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://stack:stack_password@postgres:5432/stack_db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY:-}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT:-}
+    depends_on:
+      - api
+      - redis
+    networks:
+      - stack-net
+
+  # ── Celery Beat (Scheduler) ────────────────────────────────────────────────
+  celery-beat:
+    build:
+      context: artifacts/api-server
+      dockerfile: Dockerfile
+    container_name: stack-celery-beat
+    restart: unless-stopped
+    command: celery -A app.tasks.celery_app beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://stack:stack_password@postgres:5432/stack_db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - api
+      - redis
+    networks:
+      - stack-net
+
+  # ── Google Chat Bot ────────────────────────────────────────────────────────
+  chatbot:
+    build:
+      context: artifacts/google-chatbot
+      dockerfile: Dockerfile
+    container_name: stack-chatbot
+    restart: unless-stopped
+    environment:
+      - STACK_API_URL=http://api:8080
+      - GOOGLE_CHAT_SERVICE_ACCOUNT_JSON=${GOOGLE_CHAT_SERVICE_ACCOUNT_JSON:-}
+      - PORT=9090
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+    networks:
+      - stack-net
+
+  # ── React Frontend ─────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: artifacts/stack-dashboard
+      dockerfile: Dockerfile
+    container_name: stack-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    networks:
+      - stack-net
+
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: stack-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=stack_db
+      - POSTGRES_USER=stack
+      - POSTGRES_PASSWORD=stack_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - stack-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stack -d stack_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: stack-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - stack-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Nginx Reverse Proxy ────────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: stack-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api
+      - frontend
+    networks:
+      - stack-net
+
+  # ── Elasticsearch (AI document indexing) ──────────────────────────────────
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    container_name: stack-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - stack-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+volumes:
+  postgres-data:
+  redis-data:
+  es-data:
+
+networks:
+  stack-net:
+    driver: bridge

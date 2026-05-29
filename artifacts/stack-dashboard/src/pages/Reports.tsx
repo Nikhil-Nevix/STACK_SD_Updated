@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { getToken } from "@/lib/auth";
 import {
   useGetResolutionRate,
   useGetSlaCompliance,
@@ -36,6 +37,22 @@ export default function Reports() {
   const [dateFrom, setDateFrom] = useState(thirtyDaysAgo);
   const [dateTo, setDateTo] = useState(today);
 
+  const handleExport = useCallback(async () => {
+    const token = getToken();
+    const params = new URLSearchParams({ report_type: "tickets", date_from: dateFrom, date_to: dateTo });
+    const res = await fetch(`/api/v1/reports/export?${params}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `stack-report-${dateFrom}-${dateTo}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [dateFrom, dateTo]);
+
   const params = { date_from: dateFrom, date_to: dateTo };
 
   const { data: resRate, isLoading: rateLoading } = useGetResolutionRate(params, { query: { queryKey: getGetResolutionRateQueryKey(params) } });
@@ -71,7 +88,7 @@ export default function Reports() {
           <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-9 w-36" data-testid="input-date-from" />
           <span className="text-muted-foreground text-sm">to</span>
           <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-9 w-36" data-testid="input-date-to" />
-          <Button size="sm" variant="outline" className="gap-1.5 h-9" data-testid="button-export">
+          <Button size="sm" variant="outline" className="gap-1.5 h-9" data-testid="button-export" onClick={handleExport}>
             <Download className="w-3.5 h-3.5" /> Export CSV
           </Button>
         </div>
