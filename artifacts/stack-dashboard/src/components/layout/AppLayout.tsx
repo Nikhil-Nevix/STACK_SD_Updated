@@ -10,7 +10,9 @@ import {
   BookOpen, 
   LogOut, 
   Bell, 
-  User 
+  User,
+  Download,
+  Users
 } from "lucide-react";
 import { clearToken } from "@/lib/auth";
 import { useGetMe } from "@workspace/api-client-react";
@@ -29,6 +31,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
     { name: "Tickets", path: "/tickets", icon: Ticket },
     { name: "Logs", path: "/logs", icon: FileText },
     { name: "Reports", path: "/reports", icon: BarChart },
+    { name: "Export Reports", path: "/exportable-reports", icon: Download },
+    { name: "Agent Stats", path: "/agent-performance", icon: Users },
     { name: "ROI Dashboard", path: "/roi", icon: LineChart },
     { name: "Admin", path: "/admin", icon: Settings },
     { name: "SOP Manager", path: "/sop-manager", icon: BookOpen },

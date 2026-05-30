@@ -13,6 +13,8 @@ import Tickets from "@/pages/Tickets";
 import TicketDetail from "@/pages/TicketDetail";
 import Logs from "@/pages/Logs";
 import Reports from "@/pages/Reports";
+import ExportableReports from "@/pages/ExportableReports";
+import AgentPerformance from "@/pages/AgentPerformance";
 import ROIDashboard from "@/pages/ROIDashboard";
 import Admin from "@/pages/Admin";
 import SOPManager from "@/pages/SOPManager";
@@ -59,6 +61,12 @@ function Router() {
       </Route>
       <Route path="/reports">
         {() => <ProtectedRoute component={Reports} />}
+      </Route>
+      <Route path="/exportable-reports">
+        {() => <ProtectedRoute component={ExportableReports} />}
+      </Route>
+      <Route path="/agent-performance">
+        {() => <ProtectedRoute component={AgentPerformance} />}
       </Route>
       <Route path="/roi">
         {() => <ProtectedRoute component={ROIDashboard} />}
